@@ -1,0 +1,30 @@
+# --- Python Bytecode (Useless files) ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- Virtual Environments (NEVER upload these!) ---
+venv/
+env/
+.venv/
+.env
+
+# --- Security (Passwords & Secrets) ---
+.env
+instance/
+config.py
+
+# --- Editor Settings (Don't force your settings on Vihaan) ---
+.vscode/
+.idea/
+*.swp
+
+# --- OS Junk Files ---
+.DS_Store
+Thumbs.db
+
+# --- Optional: Large Data Dumps ---
+# If your mock data SQL file is >50MB, ignore it. 
+# But for this project, keep .sql files so Team A can share them.
+# *.sql
