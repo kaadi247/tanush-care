@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- Hero Section -->
+<div class="p-5 mb-4 bg-primary text-white rounded-3">
+    <div class="container-fluid py-3">
+        <h1 class="display-5 fw-bold">Your Health, Our Priority</h1>
+        <p class="col-md-8 fs-5">Find the best doctors, book appointments instantly, and manage your health all in one place.</p>
+        <a href="/register" class="btn btn-light btn-lg me-2">Get Started</a>
+        <a href="/doctors" class="btn btn-outline-light btn-lg">Find a Doctor</a>
+    </div>
+</div>
+
+<!-- Search/Filter Section -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h5 class="card-title mb-3">Search for a Doctor</h5>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Specialisation</label>
+                <select class="form-select">
+                    <option value="">-- Select Specialisation --</option>
+                    <option>Cardiologist</option>
+                    <option>Dermatologist</option>
+                    <option>Neurologist</option>
+                    <option>Pediatrician</option>
+                    <option>Orthopedist</option>
+                    <option>General Physician</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Hospital</label>
+                <select class="form-select">
+                    <option value="">-- Select Hospital --</option>
+                    <option>City General Hospital</option>
+                    <option>Sunrise Medical Centre</option>
+                    <option>Apollo Clinic</option>
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button class="btn btn-primary w-100">Search</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Feature Cards -->
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm text-center p-3">
+            <div class="card-body">
+                <h2>🩺</h2>
+                <h5 class="card-title">Find Doctors</h5>
+                <p class="card-text">Browse verified doctors across multiple specialisations and hospitals.</p>
