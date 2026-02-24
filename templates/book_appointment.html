@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h3 class="card-title mb-4">Book an Appointment</h3>
+                <form action="/book" method="POST">
+
+                    <div class="mb-3">
+                        <label class="form-label">Select Doctor</label>
+                        <select class="form-select" name="doctor_id" required>
+                            <option value="">-- Select a Doctor --</option>
+                            <option value="1">Dr. Priya Sharma — Cardiologist</option>
+                            <option value="2">Dr. Rohan Mehta — Neurologist</option>
+                            <option value="3">Dr. Aisha Khan — Dermatologist</option>
+                            <option value="4">Dr. James Lee — Pediatrician</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Appointment Date</label>
+                        <input type="date" class="form-control" name="appointment_date" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Appointment Time</label>
+                        <input type="time" class="form-control" name="appointment_time" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Reason for Visit</label>
+                        <textarea class="form-control" name="reason" rows="3" placeholder="Briefly describe your symptoms or reason"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Book Appointment</button>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
