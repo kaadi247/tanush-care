@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="row mb-4">
+    <div class="col">
+        <h3>Welcome back, John Doe 👋</h3>
+        <p class="text-muted">Manage your appointments below.</p>
+    </div>
+    <div class="col text-end">
+        <a href="/book" class="btn btn-primary">+ Book New Appointment</a>
+    </div>
+</div>
+
+<!-- Appointments Table -->
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h5 class="card-title mb-3">My Appointments</h5>
+        <table class="table table-hover align-middle">
+            <thead class="table-primary">
+                <tr>
+                    <th>Doctor</th>
+                    <th>Specialisation</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Dr. Priya Sharma</td>
+                    <td>Cardiologist</td>
+                    <td>2025-07-10</td>
+                    <td>10:00 AM</td>
+                    <td><span class="badge bg-success">Confirmed</span></td>
+                    <td>
+                        <a href="#" class="btn btn-warning btn-sm">Reschedule</a>
+                        <a href="#" class="btn btn-danger btn-sm">Cancel</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Dr. Rohan Mehta</td>
+                    <td>Neurologist</td>
+                    <td>2025-07-15</td>
+                    <td>02:30 PM</td>
+                    <td><span class="badge bg-warning text-dark">Pending</span></td>
+                    <td>
+                        <a href="#" class="btn btn-warning btn-sm">Reschedule</a>
+                        <a href="#" class="btn btn-danger btn-sm">Cancel</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Dr. Aisha Khan</td>
+                    <td>Dermatologist</td>
+                    <td>2025-06-28</td>
+                    <td>11:00 AM</td>
+                    <td><span class="badge bg-secondary">Completed</span></td>
+                    <td>
+                        <a href="#" class="btn btn-warning btn-sm">Reschedule</a>
+                        <a href="#" class="btn btn-danger btn-sm">Cancel</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
