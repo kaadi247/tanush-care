@@ -1,15 +1,65 @@
 /* VitalLink Custom Styles */
 
 body {
-    background-color: #f8f9fa;
+    background-color: #f0f4f8;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* Navbar */
 .navbar-brand {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     letter-spacing: 1px;
 }
 
+/* Hero Section */
+.rounded-3 {
+    border-radius: 12px !important;
+}
+
+/* Cards */
+.card {
+    border: none;
+    border-radius: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Buttons */
+.btn {
+    border-radius: 8px;
+}
+
+/* Table */
+.table thead {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Badges */
+.badge {
+    font-size: 0.8rem;
+    padding: 6px 10px;
+    border-radius: 20px;
+}
+
+/* Footer */
 footer {
     border-top: 1px solid #dee2e6;
+    font-size: 0.9rem;
+}
+
+/* Forms */
+.form-control, .form-select {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
 }
