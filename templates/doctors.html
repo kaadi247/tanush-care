@@ -1,58 +1,22 @@
 {% extends "base.html" %}
-
 {% block content %}
 
 <h3 class="mb-4">Find a Doctor</h3>
-
 <div class="row g-4">
 
+    {% for doc in doctors %}
     <div class="col-md-4">
         <div class="card shadow-sm h-100">
             <div class="card-body">
-                <h5 class="card-title">Dr. Priya Sharma</h5>
-                <p class="text-muted mb-1">Cardiologist</p>
-                <p class="text-muted mb-1">🏥 City General Hospital</p>
-                <p class="text-muted mb-3">⭐ 4.8 / 5</p>
+                <h5 class="card-title">{{ doc.name }}</h5>
+                <p class="text-muted mb-1">{{ doc.specialisation }}</p>
+                <p class="text-muted mb-1">🏥 {{ doc.hospital }}</p>
+                <p class="text-muted mb-3">⭐ {{ doc.rating }} / 5</p>
                 <a href="/book" class="btn btn-primary w-100">Book Appointment</a>
             </div>
         </div>
     </div>
-
-    <div class="col-md-4">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <h5 class="card-title">Dr. Rohan Mehta</h5>
-                <p class="text-muted mb-1">Neurologist</p>
-                <p class="text-muted mb-1">🏥 Sunrise Medical Centre</p>
-                <p class="text-muted mb-3">⭐ 4.6 / 5</p>
-                <a href="/book" class="btn btn-primary w-100">Book Appointment</a>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <h5 class="card-title">Dr. Aisha Khan</h5>
-                <p class="text-muted mb-1">Dermatologist</p>
-                <p class="text-muted mb-1">🏥 Apollo Clinic</p>
-                <p class="text-muted mb-3">⭐ 4.9 / 5</p>
-                <a href="/book" class="btn btn-primary w-100">Book Appointment</a>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <h5 class="card-title">Dr. James Lee</h5>
-                <p class="text-muted mb-1">Pediatrician</p>
-                <p class="text-muted mb-1">🏥 City General Hospital</p>
-                <p class="text-muted mb-3">⭐ 4.7 / 5</p>
-                <a href="/book" class="btn btn-primary w-100">Book Appointment</a>
-            </div>
-        </div>
-    </div>
+    {% endfor %}
 
 </div>
 
