@@ -1,60 +1,64 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, flash
+from db_connect import get_db_connection
 
 app = Flask(__name__)
-
-# Put this near the top of app.py, right under app = Flask(__name__)
-MOCK_DOCTORS = [
-    {"id": 1, "name": "Dr. Priya Sharma", "specialisation": "Cardiologist", "hospital": "City General", "rating": 4.8},
-    {"id": 2, "name": "Dr. Rohan Mehta", "specialisation": "Neurologist", "hospital": "Sunrise Medical", "rating": 4.6}
-]
-
-
-
-# --- PAGE ROUTES ---
+app.secret_key = "super_secret_key_for_flash_messages" 
 
 @app.route('/')
 def home():
     return render_template('home.html')
 
-# Update the doctors route to send this data to the template
 @app.route('/doctors')
 def doctors():
-    return render_template('doctors.html', doctors=MOCK_DOCTORS)
+    # 1. Connect to the database
+    conn = get_db_connection()
+    if not conn:
+        return "Database connection failed", 500
+        
+    cursor = conn.cursor(dictionary=True)
+    
+    # 2. Fetch real doctors using Team A's JOIN logic
+    query = """
+        SELECT d.doctorID, d.doctorName, d.experience, d.fees, d.appointmentDuration,
+               h.hospitalName, h.address, h.city, h.state, s.specialisationName
+        FROM Doctor d
+        JOIN Hospital h ON d.hospitalID = h.hospitalID
+        JOIN Specialisation s ON d.specialisationID = s.specialisationID
+    """
+    cursor.execute(query)
+    real_doctors = cursor.fetchall()
+    
+    # 3. Close the connection
+    cursor.close()
+    conn.close()
+    
+    # 4. Send the real SQL data to the HTML template
+    return render_template('doctors.html', doctors=real_doctors)
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        # We are intentionally skipping the database insertion here for now!
+        # Tomorrow, we will move the Patient INSERT logic to the booking route.
+        flash("Registration simulated! Patient insertion will happen during booking tomorrow.", "info")
+        return redirect(url_for('login'))
+            
+    return render_template('register.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        return redirect(url_for('dashboard'))
+    return render_template('login.html')
 
 @app.route('/appointments')
 def dashboard():
     return render_template('dashboard.html')
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        # Logic to check email/password will go here
-        return redirect(url_for('dashboard'))
-    return render_template('login.html')
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        # Grab the data using the exact 'name' attributes Team C wrote
-        name = request.form.get('patient_name')
-        email = request.form.get('patient_email')
-        phone = request.form.get('patient_phone')
-        dob = request.form.get('patient_dob')
-        sex = request.form.get('patient_sex')
-        password = request.form.get('patient_password')
-        
-        # Print it to the terminal to prove we caught it
-        print(f"SUCCESS! Received new patient: {name}, {email}, {dob}, {sex}")
-        
-        # Send them to the login page after registering
-        return redirect(url_for('login'))
-        
-    return render_template('register.html')
-
 @app.route('/book', methods=['GET', 'POST'])
 def book_appointment():
     if request.method == 'POST':
-        # Logic to save the appointment will go here
+        flash("Appointment booked successfully!", "success")
         return redirect(url_for('dashboard'))
     return render_template('book_appointment.html')
 
