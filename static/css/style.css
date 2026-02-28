@@ -1,14 +1,25 @@
-/* VitalLink Custom Styles */
+/* TanushCare Custom Styles */
+
+:root {
+    --bs-primary: #38bdf8 !important;
+    --bs-primary-rgb: 56, 189, 248 !important;
+}
 
 body {
-    background-color: #f0f4f8;
+    background-color: #0d1117;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #e2e8f0;
 }
 
 /* Navbar */
 .navbar-brand {
     font-size: 1.6rem;
     letter-spacing: 1px;
+}
+
+.navbar-dark.bg-primary, .bg-primary {
+    background-color: #0c1a2e !important;
+    border-bottom: 1px solid #1e3a5f;
 }
 
 /* Hero Section */
@@ -18,14 +29,20 @@ body {
 
 /* Cards */
 .card {
-    border: none;
+    border: 1px solid #1e293b;
     border-radius: 12px;
+    background-color: #111827;
+    color: #e2e8f0;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 8px 24px rgba(56, 189, 248, 0.15) !important;
+}
+
+.card-title, .card-text {
+    color: #e2e8f0;
 }
 
 /* Buttons */
@@ -33,11 +50,61 @@ body {
     border-radius: 8px;
 }
 
+.btn-primary {
+    background-color: #0284c7 !important;
+    border-color: #0284c7 !important;
+    color: #ffffff !important;
+    font-weight: 500;
+}
+
+.btn-primary:hover {
+    background-color: #0369a1 !important;
+    border-color: #0369a1 !important;
+    color: #ffffff !important;
+}
+
+.btn-outline-primary {
+    color: #38bdf8 !important;
+    border-color: #38bdf8 !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: #0284c7 !important;
+    border-color: #0284c7 !important;
+    color: #ffffff !important;
+}
+
+.btn-light {
+    background-color: transparent !important;
+    color: #38bdf8 !important;
+    border-color: #38bdf8 !important;
+    font-weight: 500;
+}
+
+.btn-light:hover {
+    background-color: #38bdf8 !important;
+    color: #0d1117 !important;
+}
+
 /* Table */
+.table {
+    color: #e2e8f0;
+}
+
 .table thead {
     font-size: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+.table-primary {
+    background-color: #0c1a2e !important;
+    color: #38bdf8 !important;
+}
+
+.table-hover > tbody > tr:hover > * {
+    background-color: #1e293b;
+    color: #e2e8f0;
 }
 
 /* Badges */
@@ -49,17 +116,52 @@ body {
 
 /* Footer */
 footer {
-    border-top: 1px solid #dee2e6;
+    border-top: 1px solid #1e293b;
     font-size: 0.9rem;
+    color: #64748b;
+    background-color: #0d1117;
 }
 
 /* Forms */
 .form-control, .form-select {
     border-radius: 8px;
-    border: 1px solid #ced4da;
+    border: 1px solid #1e293b;
+    background-color: #111827;
+    color: #e2e8f0;
+}
+
+.form-control::placeholder {
+    color: #475569;
 }
 
 .form-control:focus, .form-select:focus {
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+    border-color: #0284c7;
+    box-shadow: 0 0 0 0.2rem rgba(2, 132, 199, 0.2);
+    background-color: #111827;
+    color: #e2e8f0;
+}
+
+.form-select option {
+    background-color: #111827;
+    color: #e2e8f0;
+}
+
+.form-label {
+    color: #7dd3fc;
+}
+
+/* Text muted override */
+.text-muted {
+    color: #94a3b8 !important;
+}
+
+/* Hero bg-primary override */
+.p-5.bg-primary {
+    background: linear-gradient(135deg, #0c1a2e, #0c3460) !important;
+    color: #e2e8f0 !important;
+}
+
+.p-5.bg-primary h1,
+.p-5.bg-primary p {
+    color: #e2e8f0 !important;
 }
