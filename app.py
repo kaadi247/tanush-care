@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, date
 from flask import Flask, render_template, request, redirect, url_for, flash
 from db_connect import get_db_connection
+import mysql.connector
 
 app = Flask(__name__)
 app.secret_key = "super_secret_key_for_flash_messages" 
@@ -102,12 +103,92 @@ def login():
 def dashboard():
     return render_template('dashboard.html')
 
+import mysql.connector # Make sure you import this at the top of app.py to catch the IntegrityError!
+
 @app.route('/book', methods=['GET', 'POST'])
 def book_appointment():
+    conn = get_db_connection()
+    if not conn:
+        return "Database connection failed", 500
+    cursor = conn.cursor(dictionary=True)
+
+    # --- POST REQUEST: Process the Booking ---
     if request.method == 'POST':
-        flash("Appointment booked successfully!", "success")
-        return redirect(url_for('dashboard'))
-    return render_template('book_appointment.html')
+        slot_id = request.form.get('slot_id')
+        name = request.form.get('patient_name')
+        email = request.form.get('patient_email')
+        phone = request.form.get('patient_phone')
+        dob = request.form.get('patient_dob')
+        gender = request.form.get('patient_sex')
+
+        try:
+            # 1. Start Transaction (Concurrency Control)
+            conn.start_transaction()
+
+            # 2. Check for existing patient
+            cursor.execute("""
+                SELECT patientID FROM Patient 
+                WHERE name = %s AND email = %s AND phone = %s AND dob = %s
+            """, (name, email, phone, dob))
+            existing_patient = cursor.fetchone()
+
+            if existing_patient:
+                patient_id = existing_patient['patientID']
+            else:
+                # 3. Insert new patient if not found
+                cursor.execute("""
+                    INSERT INTO Patient (name, email, phone, dob, gender)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (name, email, phone, dob, gender))
+                # Grab the ID of the patient we just inserted
+                patient_id = cursor.lastrowid 
+
+            # 4. Create the Appointment
+            cursor.execute("""
+                INSERT INTO Appointment (slotID, patientID)
+                VALUES (%s, %s)
+            """, (slot_id, patient_id))
+
+            # If no errors occurred, commit the transaction!
+            conn.commit()
+            flash("Appointment booked successfully!", "success")
+            return redirect(url_for('dashboard'))
+
+        except mysql.connector.IntegrityError:
+            # CONCURRENCY TRIGGERED! Another user took this exact slotID
+            conn.rollback()
+            flash("Sorry! This slot was just booked by someone else. Please pick another time.", "danger")
+            return redirect(url_for('doctors'))
+            
+        except Exception as e:
+            conn.rollback()
+            flash(f"Booking failed: Please ensure all details are correct. Error: {e}", "danger")
+            return redirect(url_for('doctors'))
+            
+        finally:
+            cursor.close()
+            conn.close()
+
+    # --- GET REQUEST: Show the Form ---
+    slot_id = request.args.get('slot_id')
+    if not slot_id:
+        flash("Please select a valid time slot first.", "warning")
+        return redirect(url_for('doctors'))
+
+    # Fetch the details of the slot so the user knows what they are booking
+    cursor.execute("""
+        SELECT ds.time, ds.date, d.doctorName, h.hospitalName 
+        FROM DoctorSlots ds
+        JOIN Doctor d ON ds.doctorID = d.doctorID
+        JOIN Hospital h ON d.hospitalID = h.hospitalID
+        WHERE ds.slotID = %s
+    """, (slot_id,))
+    slot_details = cursor.fetchone()
+    
+    cursor.close()
+    conn.close()
+
+    return render_template('book_appointment.html', slot_id=slot_id, details=slot_details)
 
 @app.route('/doctor/<int:doctor_id>', methods=['GET'])
 def doctor_profile(doctor_id):

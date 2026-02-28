@@ -1,46 +1,61 @@
 {% extends "base.html" %}
 
 {% block content %}
-
 <div class="row justify-content-center">
     <div class="col-md-7">
         <div class="card shadow-sm">
             <div class="card-body p-4">
-                <h3 class="card-title mb-4">Book an Appointment</h3>
+                <h3 class="card-title mb-3">Confirm Your Appointment</h3>
+                
+                {% if details %}
+                <div class="alert alert-info">
+                    <strong>Booking for:</strong> {{ details.doctorName }} at {{ details.hospitalName }}<br>
+                    <strong>Date & Time:</strong> {{ details.date }} at {{ details.time }}
+                </div>
+                {% endif %}
+
                 <form action="/book" method="POST">
+                    <input type="hidden" name="slot_id" value="{{ slot_id }}">
 
+                    <h5 class="mt-4 mb-3">Patient Details</h5>
+                    
                     <div class="mb-3">
-                        <label class="form-label">Select Doctor</label>
-                        <select class="form-select" name="doctor_id" required>
-                            <option value="">-- Select a Doctor --</option>
-                            <option value="1">Dr. Priya Sharma — Cardiologist</option>
-                            <option value="2">Dr. Rohan Mehta — Neurologist</option>
-                            <option value="3">Dr. Aisha Khan — Dermatologist</option>
-                            <option value="4">Dr. James Lee — Pediatrician</option>
-                        </select>
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-control" name="patient_name" required>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Appointment Date</label>
-                        <input type="date" class="form-control" name="appointment_date" required>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Email Address</label>
+                            <input type="email" class="form-control" name="patient_email" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Phone Number (10 Digits)</label>
+                            <input type="tel" class="form-control" name="patient_phone" pattern="[0-9]{10}" required>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Appointment Time</label>
-                        <input type="time" class="form-control" name="appointment_time" required>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Date of Birth</label>
+                            <input type="date" class="form-control" name="patient_dob" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Gender</label>
+                            <select class="form-select" name="patient_sex" required>
+                                <option value="">-- Select --</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Reason for Visit</label>
-                        <textarea class="form-control" name="reason" rows="3" placeholder="Briefly describe your symptoms or reason"></textarea>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary w-100">Book Appointment</button>
+                    <button type="submit" class="btn btn-primary w-100">Confirm Booking</button>
 
                 </form>
             </div>
         </div>
     </div>
 </div>
-
 {% endblock %}
