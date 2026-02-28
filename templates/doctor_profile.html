@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title">{{ doctor.doctorName }}</h3>
+                <h6 class="text-primary">{{ doctor.specialisationName }}</h6>
+                <hr>
+                <p><strong>🏥 Hospital:</strong> {{ doctor.hospitalName }}</p>
+                <p><strong>📍 Location:</strong> {{ doctor.city }}, {{ doctor.state }}</p>
+                <p><strong>⭐ Experience:</strong> {{ doctor.experience }} Years</p>
+                <p><strong>💵 Fees:</strong> ₹{{ doctor.fees }}</p>
+                <p><strong>⏱️ Duration:</strong> {{ doctor.appointmentDuration }} mins</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h4 class="mb-3">Available Slots</h4>
+                
+                <form action="/doctor/{{ doctor.doctorID }}" method="GET" class="mb-4 d-flex">
+                    <input type="date" class="form-control w-50 me-2" name="date" value="{{ selected_date }}" required>
+                    <button type="submit" class="btn btn-outline-primary">Check Date</button>
+                </form>
+
+                {% if slots %}
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for slot in slots %}
+                            <a href="/book?slot_id={{ slot.slotID }}" class="btn btn-success">
+                                {{ slot.time }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">No slots available for this date.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

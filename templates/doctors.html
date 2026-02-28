@@ -12,7 +12,9 @@
                 <p class="text-muted mb-1">{{ doc.specialisationName }}</p>
                 <p class="text-muted mb-1">🏥 {{ doc.hospitalName }}, {{ doc.city }}</p>
                 <p class="text-muted mb-3">⭐ Exp: {{ doc.experience }} Yrs | Fees: ₹{{ doc.fees }}</p>
-                <a href="/book" class="btn btn-primary w-100">Book Appointment</a>
+                
+                <a href="/doctor/{{ doc.doctorID }}" class="btn btn-primary w-100">View Slots & Book</a>
+                
             </div>
         </div>
     </div>
