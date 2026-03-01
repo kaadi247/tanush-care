@@ -290,12 +290,11 @@ def book_appointment():
 
 @app.route('/doctor/<int:doctor_id>', methods=['GET'])
 def doctor_profile(doctor_id):
-    # Get the date from the URL (e.g., ?date=2026-03-05). 
-    # If no date is provided, default to tomorrow.
     target_date_str = request.args.get('date')
+    
+    # 1. Change default to TODAY so it's easier to test!
     if not target_date_str:
-        target_date = date.today() + timedelta(days=1)
-        target_date_str = target_date.strftime('%Y-%m-%d')
+        target_date_str = date.today().strftime('%Y-%m-%d')
         
     conn = get_db_connection()
     if not conn:
@@ -321,36 +320,42 @@ def doctor_profile(doctor_id):
     cursor.execute("SELECT COUNT(*) as count FROM DoctorSlots WHERE doctorID = %s AND date = %s", (doctor_id, target_date_str))
     slot_count = cursor.fetchone()['count']
     
-    # QUERY 3: Dynamic Slot Generation (if count is 0)
+    # QUERY 3: Dynamic Slot Generation
     if slot_count == 0:
         duration = doctor['appointmentDuration']
         
-        # Let's simulate a clinic shift from 9:00 AM to 5:00 PM
-        current_time = datetime.strptime('09:00:00', '%H:%M:%S')
+       # The work hours are from 9-5 
+        current_time = datetime.strptime('09:00:00', '%H:%M:%S') 
         end_time = datetime.strptime('17:00:00', '%H:%M:%S')
         
-        # While loop to generate slots
         while current_time + timedelta(minutes=duration) <= end_time:
             time_str = current_time.strftime('%H:%M:%S')
-            
             cursor.execute("""
                 INSERT INTO DoctorSlots (doctorID, date, time)
                 VALUES (%s, %s, %s)
             """, (doctor_id, target_date_str, time_str))
-            
             current_time += timedelta(minutes=duration)
             
-        conn.commit() # Save the newly generated slots!
+        conn.commit()
 
-    # QUERY 4: Fetch Available Slots
+    # 2. Get Python's exact clock right now
+    now = datetime.now()
+    current_date_val = now.strftime('%Y-%m-%d')
+    current_time_val = now.strftime('%H:%M:%S')
+
+    # QUERY 4: Fetch Available Slots (Using Python's Clock!)
     cursor.execute("""
         SELECT ds.slotID, ds.time
         FROM DoctorSlots ds
         LEFT JOIN Appointment a ON ds.slotID = a.slotID
         WHERE ds.doctorID = %s AND ds.date = %s
         AND (a.appointmentID IS NULL OR a.status = 'Cancelled')
+        
+        -- The Python Timecheck!
+        AND (ds.date > %s OR (ds.date = %s AND ds.time > %s))
+        
         ORDER BY ds.time ASC
-    """, (doctor_id, target_date_str))
+    """, (doctor_id, target_date_str, current_date_val, current_date_val, current_time_val))
     available_slots = cursor.fetchall()
     
     cursor.close()

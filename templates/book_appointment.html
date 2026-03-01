@@ -38,8 +38,14 @@
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <label class="form-label">Date of Birth</label>
-                            <input type="date" class="form-control" name="patient_dob" required>
+                            <input type="date" class="form-control" name="patient_dob" id="patientDob" required>
                         </div>
+                        
+                        <script>
+                            // This grabs today's date and sets it as the absolute maximum allowed date!
+                            document.getElementById('patientDob').max = new Date().toISOString().split("T")[0];
+                        </script>
+                        
                         <div class="col-md-6">
                             <label class="form-label">Gender</label>
                             <select class="form-select" name="patient_sex" required>

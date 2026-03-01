@@ -22,10 +22,10 @@
             <div class="card-body">
                 <h4 class="mb-3">Available Slots</h4>
                 
-                <form action="/doctor/{{ doctor.doctorID }}" method="GET" class="mb-4 d-flex">
-                    <input type="date" class="form-control w-50 me-2" name="date" value="{{ selected_date }}" required>
-                    <button type="submit" class="btn btn-outline-primary">Check Date</button>
-                </form>
+                <form action="/doctor/{{ doctor.doctorID }}" method="GET" class="mb-4">
+                    <label class="form-label text-muted small mb-1">Select Date:</label>
+                    <input type="date" class="form-control w-50" name="date" id="appointmentDate" value="{{ selected_date }}" onchange="this.form.submit()" required>
+                    </form>
 
                 {% if slots %}
                     <div class="d-flex flex-wrap gap-2">
@@ -42,5 +42,11 @@
         </div>
     </div>
 </div>
+
+<script>
+    // This grabs today's date and sets it as the absolute MINIMUM allowed date!
+    // This physically prevents users from clicking yesterday on the calendar.
+    document.getElementById('appointmentDate').min = new Date().toISOString().split("T")[0];
+</script>
 
 {% endblock %}
