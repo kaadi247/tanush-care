@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, date
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session       
 from db_connect import get_db_connection
 import mysql.connector
 
@@ -96,14 +96,76 @@ def register():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        return redirect(url_for('dashboard'))
+        email = request.form.get('email')
+        phone = request.form.get('phone') # We ask for phone instead of password now!
+        
+        conn = get_db_connection()
+        if not conn:
+            return "Database connection failed", 500
+        cursor = conn.cursor(dictionary=True)
+        
+        # 1. Look for a patient with this exact Email AND Phone combination
+        cursor.execute("SELECT * FROM Patient WHERE email = %s AND phone = %s", (email, phone))
+        user = cursor.fetchone()
+        
+        cursor.close()
+        conn.close()
+        
+        # 2. If we found a match, give them the wristband!
+        if user:
+            session['family_email'] = user['email']
+            session['primary_user'] = user['name']
+            
+            flash("Welcome back! Here are your appointments.", "success")
+            return redirect(url_for('dashboard'))
+        else:
+            flash("No records found for that Email and Phone combination. Please try again.", "danger")
+            return redirect(url_for('login'))
+            
     return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    # This completely clears the VIP wristband!
+    session.clear()
+    flash("You have been securely logged out.", "info")
+    return redirect(url_for('home'))
 
 @app.route('/appointments')
 def dashboard():
-    return render_template('dashboard.html')
-
-import mysql.connector # Make sure you import this at the top of app.py to catch the IntegrityError!
+    # 1. Check if the system remembers the family email
+    if 'family_email' not in session:
+        flash("Please book an appointment or log in to view your dashboard.", "warning")
+        return redirect(url_for('home'))
+        
+    family_email = session['family_email']
+    primary_user = session['primary_user']
+    
+    conn = get_db_connection()
+    if not conn:
+        return "Database connection failed", 500
+        
+    cursor = conn.cursor(dictionary=True)
+    
+    # 2. Fetch all appointments linked to this EMAIL, and grab the patient's name!
+    query = """
+        SELECT a.appointmentID, a.status, ds.date, ds.time, 
+               d.doctorName, s.specialisationName, p.name AS patientName
+        FROM Appointment a
+        JOIN Patient p ON a.patientID = p.patientID
+        JOIN DoctorSlots ds ON a.slotID = ds.slotID
+        JOIN Doctor d ON ds.doctorID = d.doctorID
+        JOIN Specialisation s ON d.specialisationID = s.specialisationID
+        WHERE p.email = %s
+        ORDER BY ds.date ASC, ds.time ASC
+    """
+    cursor.execute(query, (family_email,))
+    family_appointments = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template('dashboard.html', appointments=family_appointments, patient_name=primary_user)
 
 @app.route('/book', methods=['GET', 'POST'])
 def book_appointment():
@@ -142,6 +204,11 @@ def book_appointment():
                 """, (name, email, phone, dob, gender))
                 # Grab the ID of the patient we just inserted
                 patient_id = cursor.lastrowid 
+            
+            # --- UPDATED SESSION LOGIC ---
+            # We now track the family email instead of a single patient ID
+            session['family_email'] = email
+            session['primary_user'] = name
 
             # 4. Create the Appointment
             cursor.execute("""

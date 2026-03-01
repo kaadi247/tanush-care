@@ -4,15 +4,14 @@
 
 <div class="row mb-4">
     <div class="col">
-        <h3>Welcome back, John Doe 👋</h3>
+        <h3>Welcome back, {{ patient_name }} </h3>
         <p class="text-muted">Manage your appointments below.</p>
     </div>
     <div class="col text-end">
-        <a href="/book" class="btn btn-primary">+ Book New Appointment</a>
+        <a href="/doctors" class="btn btn-primary">+ Book New Appointment</a>
     </div>
 </div>
 
-<!-- Appointments Table -->
 <div class="card shadow-sm">
     <div class="card-body">
         <h5 class="card-title mb-3">My Appointments</h5>
@@ -28,39 +27,31 @@
                 </tr>
             </thead>
             <tbody>
+                {% for appt in appointments %}
                 <tr>
-                    <td>Dr. Priya Sharma</td>
-                    <td>Cardiologist</td>
-                    <td>2025-07-10</td>
-                    <td>10:00 AM</td>
-                    <td><span class="badge bg-success">Confirmed</span></td>
+                    <td>{{ appt.doctorName }}</td>
+                    <td>{{ appt.specialisationName }}</td>
+                    <td>{{ appt.date }}</td>
+                    <td>{{ appt.time }}</td>
                     <td>
-                        <a href="#" class="btn btn-warning btn-sm">Reschedule</a>
-                        <a href="#" class="btn btn-danger btn-sm">Cancel</a>
+                        {% if appt.status == 'Booked' %}
+                            <span class="badge bg-success">Confirmed</span>
+                        {% else %}
+                            <span class="badge bg-danger">Cancelled</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" disabled>Reschedule</button>
+                        <button class="btn btn-danger btn-sm" disabled>Cancel</button>
                     </td>
                 </tr>
+                {% else %}
                 <tr>
-                    <td>Dr. Rohan Mehta</td>
-                    <td>Neurologist</td>
-                    <td>2025-07-15</td>
-                    <td>02:30 PM</td>
-                    <td><span class="badge bg-warning text-dark">Pending</span></td>
-                    <td>
-                        <a href="#" class="btn btn-warning btn-sm">Reschedule</a>
-                        <a href="#" class="btn btn-danger btn-sm">Cancel</a>
+                    <td colspan="6" class="text-center py-4 text-muted">
+                        You have no appointments yet. <a href="/doctors">Find a doctor</a>
                     </td>
                 </tr>
-                <tr>
-                    <td>Dr. Aisha Khan</td>
-                    <td>Dermatologist</td>
-                    <td>2025-06-28</td>
-                    <td>11:00 AM</td>
-                    <td><span class="badge bg-secondary">Completed</span></td>
-                    <td>
-                        <a href="#" class="btn btn-warning btn-sm">Reschedule</a>
-                        <a href="#" class="btn btn-danger btn-sm">Cancel</a>
-                    </td>
-                </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>

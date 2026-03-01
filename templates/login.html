@@ -6,7 +6,7 @@
     <div class="col-md-5">
         <div class="card shadow-sm">
             <div class="card-body p-4">
-                <h3 class="card-title mb-4 text-center">Welcome Back 👋</h3>
+                <h3 class="card-title mb-4 text-center">Find My Appointments </h3>
                 <form action="/login" method="POST">
 
                     <div class="mb-3">
@@ -15,12 +15,13 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Password</label>
-                        <input type="password" class="form-control" name="password" placeholder="Enter your password" required>
+                        <label class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control" name="phone" pattern="[0-9]{10}" placeholder="Enter your 10-digit phone number" required>
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100">Login</button>
-                    <p class="text-center mt-3">Don't have an account? <a href="/register">Register here</a></p>
+                    <button type="submit" class="btn btn-primary w-100">Find Appointments</button>
+                    
+                    <p class="text-center mt-3">Need to see a doctor? <a href="/doctors">Book here</a></p>
 
                 </form>
             </div>

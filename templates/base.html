@@ -19,7 +19,15 @@
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="/doctors">Find a Doctor</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/appointments">My Appointments</a></li>
+                    
+                    {% if session.get('family_email') %}
+                        <li class="nav-item"><a class="nav-link" href="/appointments">My Appointments</a></li>
+                        <li class="nav-item">
+                            <a class="btn btn-outline-light btn-sm ms-2 mt-1 px-3" href="/logout">Logout</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item"><a class="nav-link" href="/login">My Appointments</a></li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
