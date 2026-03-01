@@ -62,101 +62,97 @@ def home():
 
 @app.route('/doctors', methods=['GET'])
 def doctors():
-    # Grab the search parameters from the URL (e.g., /doctors?city=Mumbai&specialisation=Cardiology)
+    # 1. Grab all parameters from the URL
     selected_city = request.args.get('city')
     selected_spec = request.args.get('specialisation')
+    selected_hospital = request.args.get('hospital_id')
+    sort_by = request.args.get('sort')
     
     conn = get_db_connection()
     if not conn:
         return "Database connection failed", 500
-        
     cursor = conn.cursor(dictionary=True)
     
-    if selected_city and selected_spec:
-        # Implementing Team A's EXACT Search Results Query
-        query = """
-            SELECT 
-                d.doctorID, d.doctorName, d.experience, d.fees, 
-                h.hospitalName, h.city, s.specialisationName
-            FROM Doctor d
-            JOIN Hospital h ON d.hospitalID = h.hospitalID
-            JOIN Specialisation s ON d.specialisationID = s.specialisationID
-            WHERE h.city = %s 
-            AND s.specialisationName = %s
-            AND (
-                -- Case 1: Doctor has no slots at all (slots will be generated later)
-                NOT EXISTS (
-                    SELECT 1 FROM DoctorSlots ds WHERE ds.doctorID = d.doctorID
-                )
-                OR
-                -- Case 2: Doctor has at least one available slot
-                EXISTS (
-                    SELECT 1 FROM DoctorSlots ds
-                    LEFT JOIN Appointment a ON ds.slotID = a.slotID
-                    WHERE ds.doctorID = d.doctorID
-                    AND (a.appointmentID IS NULL OR a.status = 'Cancelled')
-                )
+    # 2. Dynamic Query Building (Preserving Team A's Logic)
+    # We use "WHERE 1=1" so we can easily append AND conditions
+    query = """
+        SELECT d.doctorID, d.doctorName, d.experience, d.fees, 
+               h.hospitalName, h.city, s.specialisationName
+        FROM Doctor d
+        JOIN Hospital h ON d.hospitalID = h.hospitalID
+        JOIN Specialisation s ON d.specialisationID = s.specialisationID
+        WHERE 1=1
+    """
+    params = []
+
+    if selected_city:
+        query += " AND h.city = %s"
+        params.append(selected_city)
+    if selected_spec:
+        query += " AND s.specialisationName = %s"
+        params.append(selected_spec)
+    if selected_hospital:
+        query += " AND h.hospitalID = %s"
+        params.append(selected_hospital)
+
+    # Team A's Availability Logic (EXISTS / NOT EXISTS)
+    query += """
+        AND (
+            NOT EXISTS (SELECT 1 FROM DoctorSlots ds WHERE ds.doctorID = d.doctorID)
+            OR
+            EXISTS (
+                SELECT 1 FROM DoctorSlots ds
+                LEFT JOIN Appointment a ON ds.slotID = a.slotID
+                WHERE ds.doctorID = d.doctorID
+                AND (a.appointmentID IS NULL OR a.status = 'Cancelled')
             )
-        """
-        cursor.execute(query, (selected_city, selected_spec))
-        real_doctors = cursor.fetchall()
+        )
+    """
+
+    # 3. Apply Sorting
+    if sort_by == 'fees_asc':
+        query += " ORDER BY d.fees ASC"
+    elif sort_by == 'fees_desc':
+        query += " ORDER BY d.fees DESC"
+    elif sort_by == 'exp_desc':
+        query += " ORDER BY d.experience DESC"
     else:
-        # Fallback if they just click "Find a Doctor" without searching: Show all doctors
-        query = """
-            SELECT d.doctorID, d.doctorName, d.experience, d.fees, 
-                   h.hospitalName, h.city, s.specialisationName
-            FROM Doctor d
-            JOIN Hospital h ON d.hospitalID = h.hospitalID
-            JOIN Specialisation s ON d.specialisationID = s.specialisationID
-        """
-        cursor.execute(query)
-        real_doctors = cursor.fetchall()
+        query += " ORDER BY d.doctorName ASC"
+
+    cursor.execute(query, tuple(params))
+    real_doctors = cursor.fetchall()
+
+    # 4. THE FIX: Fetch hospitals that actually have doctors for this search
+    # This ensures the dropdown is populated and only shows "valid" choices
+    hosp_query = """
+        SELECT DISTINCT h.hospitalID, h.hospitalName 
+        FROM Hospital h
+        JOIN Doctor d ON h.hospitalID = d.hospitalID
+        JOIN Specialisation s ON d.specialisationID = s.specialisationID
+        WHERE 1=1
+    """
+    hosp_params = []
+    if selected_city:
+        hosp_query += " AND h.city = %s"
+        hosp_params.append(selected_city)
+    if selected_spec:
+        hosp_query += " AND s.specialisationName = %s"
+        hosp_params.append(selected_spec)
+    
+    hosp_query += " ORDER BY h.hospitalName ASC"
+    cursor.execute(hosp_query, tuple(hosp_params))
+    hospital_list = cursor.fetchall()
         
     cursor.close()
     conn.close()
     
-    return render_template('doctors.html', doctors=real_doctors)
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        # We are intentionally skipping the database insertion here for now!
-        # Tomorrow, we will move the Patient INSERT logic to the booking route.
-        flash("Registration simulated! Patient insertion will happen during booking tomorrow.", "info")
-        return redirect(url_for('login'))
-            
-    return render_template('register.html')
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        phone = request.form.get('phone') # We ask for phone instead of password now!
-        
-        conn = get_db_connection()
-        if not conn:
-            return "Database connection failed", 500
-        cursor = conn.cursor(dictionary=True)
-        
-        # 1. Look for a patient with this exact Email AND Phone combination
-        cursor.execute("SELECT * FROM Patient WHERE email = %s AND phone = %s", (email, phone))
-        user = cursor.fetchone()
-        
-        cursor.close()
-        conn.close()
-        
-        # 2. If we found a match, give them the wristband!
-        if user:
-            session['family_email'] = user['email']
-            session['primary_user'] = user['name']
-            
-            flash("Welcome back! Here are your appointments.", "success")
-            return redirect(url_for('dashboard'))
-        else:
-            flash("No records found for that Email and Phone combination. Please try again.", "danger")
-            return redirect(url_for('login'))
-            
-    return render_template('login.html')
+    return render_template('doctors.html', 
+                           doctors=real_doctors, 
+                           hospitals=hospital_list, 
+                           city=selected_city if selected_city else "", 
+                           spec=selected_spec if selected_spec else "",
+                           current_sort=sort_by,
+                           current_hospital=selected_hospital)
 
 @app.route('/logout')
 def logout():

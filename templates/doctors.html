@@ -1,9 +1,32 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h3 class="mb-4">Find a Doctor</h3>
-<div class="row g-4">
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0">Find a Doctor</h3>
+    
+    <form action="/doctors" method="GET" class="d-flex gap-2">
+        <input type="hidden" name="city" value="{{ city }}">
+        <input type="hidden" name="specialisation" value="{{ spec }}">
 
+        <select name="hospital_id" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+            <option value="">All Hospitals</option>
+            {% for hosp in hospitals %}
+                <option value="{{ hosp.hospitalID }}" {% if current_hospital|string == hosp.hospitalID|string %}selected{% endif %}>
+                    {{ hosp.hospitalName }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <select name="sort" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+            <option value="">Sort By: Default</option>
+            <option value="fees_asc" {% if current_sort == 'fees_asc' %}selected{% endif %}>Fees: Low to High</option>
+            <option value="fees_desc" {% if current_sort == 'fees_desc' %}selected{% endif %}>Fees: High to Low</option>
+            <option value="exp_desc" {% if current_sort == 'exp_desc' %}selected{% endif %}>Experience: High to Low</option>
+        </select>
+    </form>
+</div>
+
+<div class="row g-4">
     {% for doc in doctors %}
     <div class="col-md-4">
         <div class="card shadow-sm h-100">
@@ -14,12 +37,16 @@
                 <p class="text-muted mb-3">⭐ Exp: {{ doc.experience }} Yrs | Fees: ₹{{ doc.fees }}</p>
                 
                 <a href="/doctor/{{ doc.doctorID }}" class="btn btn-primary w-100">View Slots & Book</a>
-                
             </div>
         </div>
     </div>
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info text-center">
+            No doctors found matching your criteria.
+        </div>
+    </div>
     {% endfor %}
-
 </div>
 
 {% endblock %}
