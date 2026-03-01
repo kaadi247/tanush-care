@@ -154,6 +154,47 @@ def doctors():
                            current_sort=sort_by,
                            current_hospital=selected_hospital)
 
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        # We are intentionally skipping the database insertion here for now!
+        # Tomorrow, we will move the Patient INSERT logic to the booking route.
+        flash("Registration simulated! Patient insertion will happen during booking tomorrow.", "info")
+        return redirect(url_for('login'))
+            
+    return render_template('register.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        phone = request.form.get('phone') # We ask for phone instead of password now!
+        
+        conn = get_db_connection()
+        if not conn:
+            return "Database connection failed", 500
+        cursor = conn.cursor(dictionary=True)
+        
+        # 1. Look for a patient with this exact Email AND Phone combination
+        cursor.execute("SELECT * FROM Patient WHERE email = %s AND phone = %s", (email, phone))
+        user = cursor.fetchone()
+        
+        cursor.close()
+        conn.close()
+        
+        # 2. If we found a match, give them the wristband!
+        if user:
+            session['family_email'] = user['email']
+            session['primary_user'] = user['name']
+            
+            flash("Welcome back! Here are your appointments.", "success")
+            return redirect(url_for('dashboard'))
+        else:
+            flash("No records found for that Email and Phone combination. Please try again.", "danger")
+            return redirect(url_for('login'))
+            
+    return render_template('login.html')
+
 @app.route('/logout')
 def logout():
     # This completely clears the VIP wristband!
