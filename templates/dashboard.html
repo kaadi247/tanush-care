@@ -41,8 +41,17 @@
                         {% endif %}
                     </td>
                     <td>
-                        <button class="btn btn-warning btn-sm" disabled>Reschedule</button>
-                        <button class="btn btn-danger btn-sm" disabled>Cancel</button>
+                        {% if appt.status == 'Booked' %}
+                            <div class="d-flex gap-2">
+                                <a href="/appointment/reschedule/{{ appt.appointmentID }}/{{ appt.doctorID }}" class="btn btn-warning btn-sm">Reschedule</a>
+                                
+                                <form action="/appointment/cancel/{{ appt.appointmentID }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this appointment? This cannot be undone.');">
+                                    <button type="submit" class="btn btn-danger btn-sm">Cancel</button>
+                                </form>
+                            </div>
+                        {% else %}
+                            <span class="text-muted small">No actions available</span>
+                        {% endif %}
                     </td>
                 </tr>
                 {% else %}

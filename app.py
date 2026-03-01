@@ -155,7 +155,7 @@ def dashboard():
     # 2. Fetch all appointments linked to this EMAIL, and grab the patient's name!
     query = """
         SELECT a.appointmentID, a.status, ds.date, ds.time, 
-               d.doctorName, s.specialisationName, p.name AS patientName
+               d.doctorID, d.doctorName, s.specialisationName, p.name AS patientName
         FROM Appointment a
         JOIN Patient p ON a.patientID = p.patientID
         JOIN DoctorSlots ds ON a.slotID = ds.slotID
@@ -247,6 +247,32 @@ def book_appointment():
         flash("Please select a valid time slot first.", "warning")
         return redirect(url_for('doctors'))
 
+    # *** THE 1-CLICK RESCHEDULE MAGIC ***
+    if 'reschedule_id' in session:
+        try:
+            reschedule_id = session['reschedule_id']
+            
+            # Instantly update the existing appointment to the new slot
+            cursor.execute("""
+                UPDATE Appointment 
+                SET slotID = %s 
+                WHERE appointmentID = %s
+            """, (slot_id, reschedule_id))
+            
+            conn.commit()
+            session.pop('reschedule_id', None) # Rip up the sticky note
+            
+            flash("Appointment successfully rescheduled to your new time!", "success")
+            return redirect(url_for('dashboard'))
+            
+        except Exception as e:
+            conn.rollback()
+            flash("Failed to reschedule. Please try again.", "danger")
+            return redirect(url_for('dashboard'))
+        finally:
+            cursor.close()
+            conn.close()
+    
     # Fetch the details of the slot so the user knows what they are booking
     cursor.execute("""
         SELECT ds.time, ds.date, d.doctorName, h.hospitalName 
@@ -457,6 +483,44 @@ def edit_doctor(doctor_id):
     
     flash("Doctor details successfully updated!", "success")
     return redirect(url_for('admin_dashboard'))
+
+@app.route('/appointment/cancel/<int:appointment_id>', methods=['POST'])
+def cancel_appointment(appointment_id):
+    # Security check: Make sure they are logged in
+    if 'family_email' not in session:
+        return redirect(url_for('login'))
+        
+    conn = get_db_connection()
+    if not conn:
+        return "Database connection failed", 500
+    cursor = conn.cursor()
     
+    # Update the status to 'Cancelled'
+    cursor.execute("""
+        UPDATE Appointment 
+        SET status = 'Cancelled' 
+        WHERE appointmentID = %s
+    """, (appointment_id,))
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    flash("Appointment has been successfully cancelled. The slot is now open for others.", "info")
+    return redirect(url_for('dashboard'))
+
+@app.route('/appointment/reschedule/<int:appointment_id>/<int:doctor_id>')
+def start_reschedule(appointment_id, doctor_id):
+    if 'family_email' not in session:
+        return redirect(url_for('login'))
+        
+    # 1. Attach the sticky note to their session memory!
+    session['reschedule_id'] = appointment_id
+    
+    flash("Please select a new time slot to reschedule your appointment.", "info")
+    # 2. Send them to the doctor's profile to pick a new time
+    return redirect(f"/doctor/{doctor_id}")
+
+
 if __name__ == '__main__':
     app.run(debug=True)
