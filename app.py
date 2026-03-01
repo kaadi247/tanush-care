@@ -8,8 +8,37 @@ from dotenv import load_dotenv
 
 load_dotenv() # This wakes up the .env file!
 
+import smtplib
+from email.message import EmailMessage
+
 app = Flask(__name__)
-app.secret_key = "super_secret_key_for_flash_messages" 
+app.secret_key = "super_secret_key_for_flash_messages"
+
+def send_notification_email(recipient_email, subject, body):
+    # Grab the credentials from your .env file
+    sender_email = os.getenv('MAIL_USERNAME')
+    sender_password = os.getenv('MAIL_PASSWORD')
+    
+    if not sender_email or not sender_password:
+        print("⚠️ Email credentials missing in .env! Email skipped.")
+        return
+
+    try:
+        # Construct the email
+        msg = EmailMessage()
+        msg.set_content(body)
+        msg['Subject'] = subject
+        msg['From'] = f"TanushCare Hospital Network <{sender_email}>"
+        msg['To'] = recipient_email
+
+        # Connect to Gmail's secure server and send it!
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        server.login(sender_email, sender_password)
+        server.send_message(msg)
+        server.quit()
+        print(f"📧 Email successfully sent to {recipient_email}!")
+    except Exception as e:
+        print(f"❌ Failed to send email to {recipient_email}. Error: {e}")
 
 @app.route('/')
 def home():
@@ -223,6 +252,11 @@ def book_appointment():
 
             # If no errors occurred, commit the transaction!
             conn.commit()
+
+            # SEND NEW BOOKING EMAIL
+            email_body = f"Hello {name},\n\nYour appointment is confirmed!\n\nThank you for booking with us. You can manage your appointment anytime by logging into your patient dashboard.\n\nStay healthy!"
+            send_notification_email(email, "Appointment Confirmed!", email_body)
+            
             flash("Appointment booked successfully!", "success")
             return redirect(url_for('dashboard'))
 
@@ -261,13 +295,23 @@ def book_appointment():
             
             conn.commit()
             session.pop('reschedule_id', None) # Rip up the sticky note
+
+            # --- THE FIX: Grab the email and name from their session wristband! ---
+            email = session.get('family_email')
+            name = session.get('primary_user', 'Patient')
+
+            # SEND RESCHEDULE EMAIL
+            if email:
+                email_body = f"Hello {name},\n\nYour appointment has been successfully rescheduled.\n\nThank you for choosing our hospital network. You can view your updated timeline on your dashboard.\n\nStay healthy!"
+                send_notification_email(email, "Appointment Rescheduled - Update", email_body)
+            # ----------------------------------------------------------------------
             
             flash("Appointment successfully rescheduled to your new time!", "success")
             return redirect(url_for('dashboard'))
             
         except Exception as e:
             conn.rollback()
-            flash("Failed to reschedule. Please try again.", "danger")
+            flash(f"Failed to reschedule. Please try again. Error: {e}", "danger")
             return redirect(url_for('dashboard'))
         finally:
             cursor.close()
@@ -508,6 +552,13 @@ def cancel_appointment(appointment_id):
     """, (appointment_id,))
     
     conn.commit()
+    
+    # Grab the family email from the session to send the alert!
+    family_email = session.get('family_email')
+    if family_email:
+        email_body = "Hello,\n\nThis is a confirmation that your appointment has been cancelled. The time slot has been freed up for other patients.\n\nIf this was a mistake, please visit the dashboard to book a new appointment."
+        send_notification_email(family_email, "Appointment Cancelled", email_body)
+    
     cursor.close()
     conn.close()
     
