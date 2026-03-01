@@ -3,6 +3,11 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from db_connect import get_db_connection
 import mysql.connector
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv() # This wakes up the .env file!
+
 app = Flask(__name__)
 app.secret_key = "super_secret_key_for_flash_messages" 
 
@@ -327,5 +332,131 @@ def doctor_profile(doctor_id):
     
     return render_template('doctor_profile.html', doctor=doctor, slots=available_slots, selected_date=target_date_str)
 
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+        
+        # Check against the secret .env variables
+        if email == os.getenv('ADMIN_EMAIL') and password == os.getenv('ADMIN_PASSWORD'):
+            session['is_admin'] = True # Hand them the God-mode wristband!
+            flash("Welcome, Administrator. God-mode activated.", "success")
+            return redirect(url_for('admin_dashboard'))
+        else:
+            flash("Invalid Admin Credentials.", "danger")
+            return redirect(url_for('admin_login'))
+            
+    return render_template('admin_login.html')
+
+@app.route('/admin/dashboard')
+def admin_dashboard():
+    # SECURITY CHECK
+    if not session.get('is_admin'):
+        flash("Access Denied. Administrators only.", "danger")
+        return redirect(url_for('home'))
+        
+    conn = get_db_connection()
+    if not conn:
+        return "Database connection failed", 500
+    cursor = conn.cursor(dictionary=True)
+    
+    # 1. Fetch all doctors for the master table
+    cursor.execute("""
+        SELECT d.doctorID, d.doctorName, d.experience, d.fees, d.appointmentDuration,
+               h.hospitalName, s.specialisationName
+        FROM Doctor d
+        JOIN Hospital h ON d.hospitalID = h.hospitalID
+        JOIN Specialisation s ON d.specialisationID = s.specialisationID
+        ORDER BY d.doctorID DESC
+    """)
+    all_doctors = cursor.fetchall()
+    
+    # 2. Fetch lists for the "Add Doctor" dropdown menus
+    cursor.execute("SELECT hospitalID, hospitalName FROM Hospital ORDER BY hospitalName ASC")
+    hospitals = cursor.fetchall()
+    
+    cursor.execute("SELECT specialisationID, specialisationName FROM Specialisation ORDER BY specialisationName ASC")
+    specialisations = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template('admin_dashboard.html', doctors=all_doctors, hospitals=hospitals, specialisations=specialisations)
+
+@app.route('/admin/doctor/add', methods=['POST'])
+def add_doctor():
+    if not session.get('is_admin'):
+        return redirect(url_for('home'))
+        
+    name = request.form.get('name')
+    experience = request.form.get('experience')
+    fees = request.form.get('fees')
+    duration = request.form.get('duration')
+    specialisation_id = request.form.get('specialisation_id')
+    hospital_id = request.form.get('hospital_id')
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        INSERT INTO Doctor (doctorName, experience, fees, appointmentDuration, specialisationID, hospitalID)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """, (name, experience, fees, duration, specialisation_id, hospital_id))
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    flash(f"Dr. {name} successfully added to the network!", "success")
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/doctor/delete/<int:doctor_id>', methods=['POST'])
+def delete_doctor(doctor_id):
+    if not session.get('is_admin'):
+        return redirect(url_for('home'))
+        
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Because Team A used 'ON DELETE CASCADE' in the schema, deleting the doctor 
+    # here will automatically delete all their slots and appointments too!
+    cursor.execute("DELETE FROM Doctor WHERE doctorID = %s", (doctor_id,))
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    flash("Doctor and all associated slots deleted.", "info")
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/doctor/edit/<int:doctor_id>', methods=['POST'])
+def edit_doctor(doctor_id):
+    # SECURITY CHECK
+    if not session.get('is_admin'):
+        return redirect(url_for('home'))
+        
+    # Grab the updated values typed into the popup form
+    experience = request.form.get('experience')
+    fees = request.form.get('fees')
+    hospital_id = request.form.get('hospital_id')
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Run the SQL UPDATE command!
+    cursor.execute("""
+        UPDATE Doctor 
+        SET experience = %s, fees = %s, hospitalID = %s 
+        WHERE doctorID = %s
+    """, (experience, fees, hospital_id, doctor_id))
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    flash("Doctor details successfully updated!", "success")
+    return redirect(url_for('admin_dashboard'))
+    
 if __name__ == '__main__':
     app.run(debug=True)
