@@ -579,4 +579,4 @@ def start_reschedule(appointment_id, doctor_id):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5001)
