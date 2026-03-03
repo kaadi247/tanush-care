@@ -218,10 +218,19 @@ def dashboard():
         
     cursor = conn.cursor(dictionary=True)
     
-    # 2. Fetch all appointments linked to this EMAIL, and grab the patient's name!
+    # Grab the exact current time from Python
+    now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+    # 2. Fetch appointments and dynamically calculate if they are "Completed"
+    # (Removed inline comments and used TIMESTAMPADD for maximum compatibility)
     query = """
         SELECT a.appointmentID, a.status, ds.date, ds.time, 
-               d.doctorID, d.doctorName, s.specialisationName, p.name AS patientName
+               d.doctorID, d.doctorName, s.specialisationName, p.name AS patientName,
+               CASE 
+                   WHEN a.status = 'Cancelled' THEN 'Cancelled'
+                   WHEN TIMESTAMPADD(MINUTE, d.appointmentDuration, TIMESTAMP(ds.date, ds.time)) < %s THEN 'Completed'
+                   ELSE 'Booked'
+               END AS display_status
         FROM Appointment a
         JOIN Patient p ON a.patientID = p.patientID
         JOIN DoctorSlots ds ON a.slotID = ds.slotID
@@ -230,7 +239,8 @@ def dashboard():
         WHERE p.email = %s
         ORDER BY ds.date ASC, ds.time ASC
     """
-    cursor.execute(query, (family_email,))
+    
+    cursor.execute(query, (now_str, family_email))
     family_appointments = cursor.fetchall()
     
     cursor.close()
@@ -299,9 +309,18 @@ def book_appointment():
 
         except mysql.connector.IntegrityError:
             # CONCURRENCY TRIGGERED! Another user took this exact slotID
-            conn.rollback()
+            conn.rollback() #cancelling the failed booking
+
+            # Fetch the doctorID so we can send the user back to the right calendar
+            cursor.execute("SELECT doctorID FROM DoctorSlots WHERE slotID = %s", (slot_id,))
+            doc_result = cursor.fetchone()
+
             flash("Sorry! This slot was just booked by someone else. Please pick another time.", "danger")
-            return redirect(url_for('doctors'))
+            
+            if doc_result:
+                return redirect(f"/doctor/{doc_result['doctorID']}")
+            else:
+                return redirect(url_for('doctors'))
             
         except Exception as e:
             conn.rollback()
